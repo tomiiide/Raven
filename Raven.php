@@ -16,7 +16,12 @@ class Raven
 
 
         public function __construct(){
-           $this->conn = curl_init();
+          $this->_init();
+        }
+
+
+        private function _init(){
+            $this->conn = curl_init();
             $fp = fopen(dirname(__FILE__).'/errorlog.txt', 'w');
            curl_setopt_array($this->conn,array(
                CURLOPT_RETURNTRANSFER => true,
@@ -27,12 +32,15 @@ class Raven
            $this->type();
         }
 
-        public function type($type = 'get'){
-            switch($type) {
-                case 'get':
+        public function type($type = 'GET'){
+            switch(strtoupper($type)) {
+                
+                case 'GET':
+                $this->request_type = 'GET';
                     break;
-                case 'post':
-                    $this->request_type = 'post';
+                
+                case 'POST':
+                    $this->request_type = 'POST';
                     curl_setopt($this->conn,CURLOPT_POST,1);
                     break;
             }
@@ -52,20 +60,21 @@ class Raven
             }
 
             switch ($this->request_type){
-                case 'get':
+                case 'GET':
                     $this->url .= '?';
                     foreach ($data as $key => $value){
                         $this->url .= $key.'='.$value.'&';
                     }
+                    $this->url($this->url);
                     break;
-                case 'post':
+                case 'POST':
                     curl_setopt($this->conn,CURLOPT_POSTFIELDS,json_encode($data));
                     break;
             }
             return $this;
         }
 
-        public function header(array $data){
+        public function headers(array $data){
             curl_setopt($this->conn,CURLOPT_HTTPHEADER,$data);
             return $this;
         }
@@ -77,6 +86,7 @@ class Raven
                 $data = curl_error($this->conn);
 
 //            var_dump(curl_getinfo($this->conn));
+            $this->close();
             return $data;
         }
 
